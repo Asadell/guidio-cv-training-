@@ -1,0 +1,28 @@
+# Requirements untuk guido_cv_training
+# Gunakan .venv yang sudah ada di project/backend/ (sudah include torch + ultralytics + CUDA)
+#
+# Cek yang sudah terinstall:
+#   .venv/bin/pip list | grep -E "torch|ultralytics|onnx|pycocotools"
+#
+# Jika ada yang kurang, install dengan:
+#   .venv/bin/pip install <package>
+#
+# JANGAN buat venv baru — pakai symlink .venv yang mengarah ke project/backend/venv
+
+# === Sudah ada di backend/venv (tidak perlu install ulang) ===
+# torch>=2.1.0           (dengan CUDA)
+# torchvision>=0.16.0
+# ultralytics>=8.3.0
+# onnxruntime-gpu>=1.18.0  atau onnxruntime
+# opencv-python>=4.10.0
+# numpy>=1.26.0
+# Pillow>=10.0.0
+# tqdm>=4.66.0
+
+# === Perlu dicek / mungkin belum ada ===
+pycocotools>=2.0.7    # untuk script 04 (konversi COCO segmentation -> mask)
+lxml>=5.2.0           # untuk parsing XML VOC (script 01)
+PyYAML>=6.0.1         # untuk baca data.yaml SafeWalkBD
+
+# === Opsional (untuk validasi ONNX) ===
+onnx>=1.16.0

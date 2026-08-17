@@ -1,0 +1,20 @@
+# Konfigurasi dataset untuk training YOLO11n (Deteksi Rintangan Mode Navigasi)
+# File ini di-generate otomatis oleh scripts/03_merge_yolo_datasets.py
+# atau bisa diedit manual sesuai lokasi dataset_master_yolo/ kamu.
+
+# Path absolut lebih aman daripada relatif saat menjalankan dari folder berbeda
+path: /home/asadel/kuliah/lomba/smstr6/guido/dataset_sidewalk/dataset_master_yolo
+train: images/train
+val:   images/valid
+test:  images/test
+
+# 6 kelas target (BUKAN 7 — tangga digabung jadi 1 kelas)
+# Lihat src/class_mapping.py -> TARGET_YOLO_CLASSES untuk penjelasan lengkap
+nc: 6
+names:
+  0: lubang        # pothole / lubang trotoar / lubang aspal
+  1: got_terbuka   # manhole tanpa tutup / selokan terbuka
+  2: tangga        # tangga (naik atau turun, digabung)
+  3: orang         # person / pedestrian
+  4: motor         # kendaraan bermotor (motor, mobil, bus, truk)
+  5: tiang         # pole / obstacle / tiang listrik / gerobak PKL
