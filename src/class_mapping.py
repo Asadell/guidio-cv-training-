@@ -27,9 +27,6 @@ TARGET_YOLO_CLASSES = [
 YOLO_NAME_TO_ID = {name: idx for idx, name in enumerate(TARGET_YOLO_CLASSES)}
 
 # --- Mapping dari SafeWalkBD.v1i.yolov11 (16 kelas asli) ------------------
-# Kelas yang TIDAK di-mapping (sengaja di-skip):
-#   Animal, Crosswalk, Over-bridge, Railway, Road-barrier, Sidewalk,
-#   Traffic-light, Traffic-sign, Train, Tree
 SAFEWALKBD_TO_TARGET = {
     "Pothole":  "lubang",
     "Stairs":   "tangga",   # naik/turun digabung — lihat komentar di atas
@@ -39,18 +36,36 @@ SAFEWALKBD_TO_TARGET = {
     "Vehicle":  "motor",
 }
 
-# --- Mapping dari pothole_1 (Pascal VOC, 1 kelas) --------------------------
-POTHOLE_1_TO_TARGET = {
+# --- Mapping dari dataset Pothole publik (Roboflow & Kaggle) ---------------
+POTHOLE_CLASS_MAP = {
     "pothole": "lubang",
+    "potholes": "lubang",
+    "hole": "lubang",
+    "manhole": "got_terbuka",
+    "drain": "got_terbuka",
+    "got_terbuka": "got_terbuka",
+    "open_manhole": "got_terbuka",
+    "crack": "lubang",
+    "D40": "lubang",         # RDD2022 pothole code
+    "D00": "lubang",         # Longitudinal crack / hazard
+    "D10": "lubang",         # Transverse crack / hazard
+    "D20": "lubang",         # Alligator crack / hazard
 }
 
-# --- Mapping dari pothole_2 (COCO JSON, 3 kelas) ---------------------------
-# "crack" sengaja TIDAK dipetakan: retak aspal tidak kritis untuk navigasi tunanetra.
-# Tambahkan "crack": "lubang" di sini jika ingin diikutkan.
-POTHOLE_2_TO_TARGET = {
-    "pothole": "lubang",
-    "manhole": "got_terbuka",
-    # "crack": tidak dipakai
+# --- Mapping dari dataset Tangga / Stairs publik --------------------------
+STAIRS_CLASS_MAP = {
+    "stair": "tangga",
+    "stairs": "tangga",
+    "stairs_up": "tangga",
+    "stairs_down": "tangga",
+    "stair_up": "tangga",
+    "stair_down": "tangga",
+    "upstairs": "tangga",
+    "downstairs": "tangga",
+    "step": "tangga",
+    "steps": "tangga",
+    "stairway": "tangga",
+    "ladder": "tangga",
 }
 
 # ---------------------------------------------------------------------------
