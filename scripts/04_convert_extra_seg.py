@@ -138,7 +138,14 @@ def process_png_mask_folder(src_dir: Path, out_img_dir: Path, out_mask_dir: Path
                 mask_binary = (mask_np > 0).astype(np.uint8)
 
             stem = f"{prefix}_{img_file.stem}"
-            img.save(out_img_dir / f"{stem}.jpg", quality=95)
+            dest_img = out_img_dir / f"{stem}.jpg"
+            if dest_img.exists():
+                dest_img.unlink()
+            try:
+                os.link(img_file, dest_img)
+            except Exception:
+                img.save(dest_img, quality=95)
+
             Image.fromarray(mask_binary, mode="L").save(out_mask_dir / f"{stem}.png")
             written += 1
         except Exception:

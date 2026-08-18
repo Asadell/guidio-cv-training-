@@ -243,7 +243,17 @@ def process_dataset_folder(dataset_dir: Path, out_root: Path, prefix: str, defau
         dest_img = img_out_dir / f"{new_stem}{img_path.suffix}"
         dest_lbl = lbl_out_dir / f"{new_stem}.txt"
 
-        shutil.copy2(img_path, dest_img)
+        # Gunakan Hardlink / Symlink agar HAMPIR 0 MB Disk Space (bebas dari error No Space Left)
+        if dest_img.exists():
+            dest_img.unlink()
+        try:
+            os.link(img_path, dest_img)
+        except Exception:
+            try:
+                os.symlink(img_path.resolve(), dest_img)
+            except Exception:
+                shutil.copy2(img_path, dest_img)
+
         dest_lbl.write_text("\n".join(lines) + "\n")
         copied += 1
 
