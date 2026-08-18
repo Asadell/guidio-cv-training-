@@ -270,7 +270,9 @@ def main():
     if args.out_dir:
         out_dir = Path(args.out_dir).resolve()
     else:
-        out_dir = base_dir.parent / "dataset_sidewalk" / "dataset_master_yolo"
+        # Default: letakkan di dalam base_dir itu sendiri, bukan parent-nya
+        # GPU: /root/datasets/dataset_master_yolo
+        out_dir = base_dir / "dataset_master_yolo"
 
     print("=" * 65)
     print("  GUIDIO — Comprehensive Dataset Merger (Potholes + Stairs + Obstacles)")
@@ -324,7 +326,13 @@ names:
   4: motor         # kendaraan bermotor (motor, mobil, bus, truk)
   5: tiang         # pole / obstacle / tiang listrik / gerobak PKL
 """
-    config_file = out_dir.parent / "guido_cv_training" / "configs" / "custom_navigasi.yaml"
+    # Coba tulis ke workspace repo (GPU: /workspace/guidio-cv-training-/configs/)
+    # Fallback: di sebelah out_dir
+    workspace_cfg = Path("/workspace/guidio-cv-training-/configs/custom_navigasi.yaml")
+    if workspace_cfg.parent.exists():
+        config_file = workspace_cfg
+    else:
+        config_file = out_dir.parent / "guido_cv_training" / "configs" / "custom_navigasi.yaml"
     config_file.parent.mkdir(parents=True, exist_ok=True)
     config_file.write_text(yaml_content)
 
