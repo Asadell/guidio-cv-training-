@@ -88,18 +88,32 @@ def main():
     best_pt = Path(args.project) / args.name / "weights" / "best.pt"
     print(f"\n[OK] Model PyTorch terbaik disimpan di: {best_pt}")
 
-    # Export ke TFLite INT8 untuk On-Device Mobile (Flutter)
-    print("\n[→] Meng-export model ke TFLite INT8 (untuk Flutter mobile offline)...")
+    # Export ke LiteRT (TFLite) INT8 untuk On-Device Mobile (Flutter)
+    #
+    # FIX dari run sebelumnya:
+    # - format="tflite" → deprecated sejak Ultralytics 8.4.83, ganti ke format="litert"
+    # - int8=True       → deprecated, ganti ke quantize=True
+    # - data=args.data  → pakai dataset kustom kita (bukan coco8.yaml default)
+    #   agar kalibrasi INT8 representatif (minimal 300+ gambar dari domain trotoar)
+    print("\n[→] Meng-export model ke LiteRT INT8 (untuk Flutter mobile offline)...")
     try:
-        tflite_model = YOLO(str(best_pt))
-        tflite_path = tflite_model.export(format="tflite", int8=True)
-        print(f"[OK] Model TFLite INT8 berhasil diexport ke: {tflite_path}")
+        litert_model = YOLO(str(best_pt))
+        litert_path  = litert_model.export(
+            format="litert",       # menggantikan format="tflite" yang deprecated
+            quantize=True,         # menggantikan int8=True yang deprecated
+            data=args.data,        # dataset kustom kita untuk kalibrasi INT8 (bukan coco8)
+            imgsz=args.imgsz,
+        )
+        print(f"[OK] Model LiteRT INT8 berhasil diexport ke: {litert_path}")
     except Exception as e:
-        print(f"[!] Gagal export TFLite otomatis: {e}")
-        print("    Kamu bisa jalankan manual: yolo export model=best.pt format=tflite int8=True")
+        print(f"[!] Gagal export LiteRT otomatis: {e}")
+        print("    Kamu bisa jalankan manual:")
+        print(f"    yolo export model={best_pt} format=litert quantize=True data={args.data}")
 
     print("\n" + "=" * 65)
-    print("  [FINISHED] Model siap digunakan untuk Backend (.pt) & Mobile (.tflite)")
+    print("  [FINISHED] Model siap digunakan:")
+    print(f"  Backend (.pt)      : {best_pt}")
+    print(f"  Mobile  (.tflite)  : hasil export litert di folder weights/")
     print("=" * 65)
 
 
