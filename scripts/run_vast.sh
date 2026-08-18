@@ -1,29 +1,40 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# GUIDIO — One-Command Pipeline Script for Vast.ai GPU Training
+# GUIDIO — Complete GPU Pipeline (YOLO11n + PIDNet-S Sidewalk Segmentation)
 # ==============================================================================
 set -e
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
+PYTHON_BIN="/venv/main/bin/python"
+if [ ! -f "$PYTHON_BIN" ]; then
+    PYTHON_BIN="python3"
+fi
+
 echo "======================================================================"
-echo "  GUIDIO CV Pipeline — Dataset Merge & Training (GPU Vast.ai)"
+echo "  GUIDIO Complete Pipeline (YOLO11n Obstacles + PIDNet-S Sidewalk)"
+echo "  Python Executable: $PYTHON_BIN"
 echo "======================================================================"
 
-# 1. Pull latest code from GitHub
-echo -e "\n[1/3] Pulling latest code from GitHub..."
-git pull origin main || echo "[!] Warning: Git pull failed or offline"
+# 1. Merge YOLO datasets (Potholes + Stairs + Sidewalk BBoxes) -> dataset_master_yolo
+echo -e "\n[1/4] Merging all YOLO Datasets..."
+"$PYTHON_BIN" scripts/03_merge_all_datasets.py --base-dir /root/datasets
 
-# 2. Merge all datasets from ~/datasets/ into dataset_master_yolo/
-echo -e "\n[2/3] Merging all Kaggle + Roboflow + SafeWalkBD datasets..."
-python3 scripts/03_merge_all_datasets.py --base-dir /root/datasets
+# 2. Merge PIDNet Segmentation Datasets -> dataset_master_seg
+echo -e "\n[2/4] Converting & Merging Sidewalk Segmentation Datasets..."
+"$PYTHON_BIN" scripts/04_convert_extra_seg.py --base-dir /root/datasets/sidewalk-extra
 
-# 3. Run YOLO11n training with timestamped outputs
-EPOCHS="${1:-100}"
-echo -e "\n[3/3] Starting YOLO11n Training (${EPOCHS} epochs)..."
-python3 scripts/05_train_yolo.py --epochs "$EPOCHS"
+# 3. Train YOLO11n (100 Epochs) -> Output .pt + .tflite
+EPOCHS_YOLO="${1:-100}"
+echo -e "\n[3/4] Training YOLO11n Obstacle Detection (${EPOCHS_YOLO} epochs)..."
+"$PYTHON_BIN" scripts/05_train_yolo.py --epochs "$EPOCHS_YOLO"
+
+# 4. Train PIDNet-S (80 Epochs) -> Output .pth + .onnx
+EPOCHS_SEG="${2:-80}"
+echo -e "\n[4/4] Training PIDNet-S Sidewalk 3-Zone Segmentation (${EPOCHS_SEG} epochs)..."
+"$PYTHON_BIN" scripts/06_train_pidnet.py --epochs "$EPOCHS_SEG"
 
 echo -e "\n======================================================================"
-echo "  [SUCCESS] All pipeline steps completed successfully!"
+echo "  [SUCCESS] All Training & Export Tasks Finished Successfully!"
 echo "======================================================================"
