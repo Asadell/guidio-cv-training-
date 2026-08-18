@@ -33,7 +33,7 @@ echo -e "\n[3/4] Training YOLO11n Obstacle Detection (${EPOCHS_YOLO} epochs)..."
 # 4. Train PIDNet-S (80 Epochs) -> Output .pth + .onnx
 EPOCHS_SEG="${2:-80}"
 echo -e "\n[4/4] Training PIDNet-S Sidewalk 3-Zone Segmentation (${EPOCHS_SEG} epochs)..."
-"$PYTHON_BIN" scripts/06_train_pidnet.py --epochs "$EPOCHS_SEG"
+"$PYTHON_BIN" scripts/06_train_pidnet.py --epochs "$EPOCHS_SEG" --dataset-root /root/datasets/dataset_master_seg
 
 echo -e "\n======================================================================"
 echo "  [SUCCESS] All Training & Export Tasks Finished Successfully!"

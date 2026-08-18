@@ -2,7 +2,7 @@
 
 Pipeline training otomatis untuk dua model vision utama pada aplikasi **Vinara (GUIDIO)**:
 1. **YOLO11n (Deteksi Rintangan 6-Kelas)**: Deteksi *lubang, got_terbuka, tangga, orang, motor, tiang*. Output disiapkan untuk **Backend (.pt)** dan **Mobile On-Device (.tflite INT8)**.
-2. **PIDNet-S (Segmentasi Jalur Trotoar 3-Zona)**: Mewarnai piksel foto secara real-time menjadi *non_walkable (0), walkable (1), hazard (2)*. Output disiapkan untuk **Backend (.onnx)**.
+2. **PIDNet-S (Segmentasi Jalur Trotoar 3-Zona)**: Mewarnai piksel foto secara real-time menjadi *non_walkable (0), walkable (1), hazard (2)*. Output disiapkan untuk **Backend (.onnx)** dan **Mobile On-Device (.tflite FP16)**.
 
 ---
 
@@ -19,15 +19,17 @@ Pipeline training otomatis untuk dua model vision utama pada aplikasi **Vinara (
    ├─► STEP 2: Configure Physical Context Augmentation (05_train_yolo.py)
    │   └─ flipud=0.0 (strictly no upside down), degrees=10.0 (chest camera wobble)
    │
-   ├─► STEP 3: Train Ultralytics YOLO11n on NVIDIA RTX 5090 GPU (100 Epochs)
+   ├─► STEP 3: Train Ultralytics YOLO11n on NVIDIA GPU (100 Epochs)
    │   └─ Real-time loss logging, validation, & best weight saving (`best.pt`)
    │
-   ├─► STEP 4: Dual Export Strategy (Backend & Mobile)
+   ├─► STEP 4: Dual Export Strategy YOLO11n (Backend & Mobile)
    │   ├─► PyTorch Model (`.pt`)  --> FastAPI Backend Server (High Precision Cloud)
    │   └─► TFLite Model (`.tflite INT8 ~4-8MB`) --> Flutter App (On-Device Offline)
    │
-   └─► STEP 5: Train PIDNet-S Sidewalk Segmentation (06_train_pidnet.py)
-       └─ Export `.onnx` model for real-time 3-zone color segmentation
+   └─► STEP 5: Train PIDNet-S Sidewalk Segmentation (06_train_pidnet.py - 80 Epochs)
+       ├─► Class Weighting `[1.0, 1.0, 3.0]` (Hazard awareness 3x)
+       ├─► ONNX Model (`pidnet_s.onnx`) --> FastAPI Backend Server
+       └─► TFLite Model (`pidnet_s.tflite FP16 ~7-12MB`) --> Flutter App (On-Device Offline)
 ```
 
 ### Detail Penjelasan Tiap Step:
@@ -44,18 +46,22 @@ Pipeline training otomatis untuk dua model vision utama pada aplikasi **Vinara (
    - **`hsv_h = 0.015, hsv_s = 0.5, hsv_v = 0.4`**: Mensimulasikan kondisi pencahayaan Indonesia (terik, mendung, dan bayangan pohon).
    - **`scale = 0.3` & `mosaic = 1.0`**: Mensimulasikan rintangan jarak jauh dan dekat secara bersamaan.
 
-3. **Step 3 — High-Speed GPU Training (RTX 5090)**:
-   - Pelatihan menggunakan PyTorch + CUDA pada GPU RTX 5090 (~8.7 iterations/sec).
-   - 100 Epochs diselesaikan dalam waktu ~1.5 - 2 jam untuk 18.098 data.
+3. **Step 3 — High-Speed GPU Training**:
+   - Pelatihan menggunakan PyTorch + CUDA pada GPU server (RTX 5090 / RTX 3050).
+   - 100 Epochs diselesaikan untuk 18.098 data YOLO.
    - Evaluasi mAP50 dan Recall dilakukan di akhir tiap epoch menggunakan split validasi (`images/valid`).
 
-4. **Step 4 — Strategi Dual Export Model**:
+4. **Step 4 — Strategi Dual Export Model YOLO11n**:
    - **Backend Server (`.pt`)**: File bobot PyTorch asli untuk inference berkecepatan tinggi di server cloud FastAPI.
    - **Mobile Flutter (`.tflite`)**: Model diexport dan di-quantized ke **TFLite INT8** (ukuran ~4-8 MB). Model ini bisa di-load via package `tflite_flutter` untuk deteksi **offline tanpa sinyal internet** di HP tunanetra.
 
-5. **Step 5 — PIDNet-S Sidewalk Segmentation Training**:
-   - Menggunakan loss function bertingkat dengan Class Weighting `[1.0, 1.0, 3.0]` (kelas `hazard` seperti tangga/lubang diberi bobot 3x lebih besar).
-   - Output berupa model `.onnx` untuk inferensi segmentasi trotoar 3 zona (*non_walkable*, *walkable*, *hazard*).
+5. **Step 5 — PIDNet-S Sidewalk Segmentation Training & Dual Export**:
+   - **Class Weighting `[1.0, 1.0, 3.0]`**: Kelas `hazard` (tangga/lubang) diberi bobot 3x lebih besar dari trotoar biasa agar model sangat peka terhadap bahaya.
+   - **Pembaruan & Perbaikan Script (`06_train_pidnet.py`)**:
+     - *Auto-detect Path GPU*: Secara otomatis membaca `/root/datasets/dataset_master_seg` saat running di GPU Vast.ai, dengan fallback ke folder lokal.
+     - *Fix ONNX Export Trace Bug*: Menggunakan `_OnnxWrapper` khusus agar model mengembalikan tensor tunggal `logits` saat di-trace (menghindari error tuple `(logits, aux)`).
+     - *Dual Export (Backend + Mobile)*: Menghasilkan `pidnet_s.onnx` untuk backend dan `pidnet_s.tflite` (FP16 ~7-12MB) untuk Flutter on-device.
+     - *Validation Clean Architecture*: Refactoring `run_epoch` dengan flag `is_train` yang jelas dan penanganan `vl_iou` aman tanpa `NameError`.
 
 ---
 
